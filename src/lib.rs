@@ -70,11 +70,38 @@ impl Stych {
 
         Ok(resp.json().await?)
     }
+
+    pub async fn auth(&self, token: impl Into<String>) -> Result<()> {
+        #[derive(Serialize)]
+        struct RequestJson {
+            token: String,
+        }
+
+        let request_json = RequestJson {
+            token: token.into(),
+        };
+
+        let client = reqwest::Client::new();
+        let resp = client
+            .post(self.api.clone() + "/v1/magic_links/authenticate")
+            .basic_auth(&self.project_id, Some(&self.secret))
+            .json(&request_json)
+            .send()
+            .await?;
+
+        let status = resp.status();
+        if status != StatusCode::OK {
+            return Err(Error::Auth(status));
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Deserialize)]
 pub struct User {
     pub id: String,
+    pub token: String, // TODO: check return of login_or_create
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -82,6 +109,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     Request(reqwest::Error),
     LoginOrCreate(StatusCode),
+    Auth(StatusCode),
 }
 
 impl From<reqwest::Error> for Error {
