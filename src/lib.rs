@@ -1,15 +1,49 @@
+//! Unofficial glue wrapper to use the basic email flow of Stych inside of Rust
+//!
+//! # Usage
+//!
+//! ```rust
+//! use stych::Stych;
+//!
+//! // Store credentials
+//! let stych = Stych::new(
+//!     "project_id",
+//!     "secret",
+//!     "redirect_for_login",
+//!     "redirect_for_signup"
+//! );
+//!
+//! // Create new user
+//! let user = stych.login_or_create("root@ogriffiths.com").await.unwrap();
+//!
+//! // Authenticate
+//! let authenticated = stych.auth(user.token).await.is_ok();
+//! if authenticated {
+//!     println!("This user is good!");
+//! } else {
+//!     println!("Nope!");
+//! }
+//! ```
+
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
+/// Credential storage and link management
 pub struct Stych {
+    /// Project identifier credential
     pub project_id: String,
+    /// Secret credential
     pub secret: String,
+    /// Link to use to redirect to your login page
     pub link_login: String,
+    /// Link to use to redirect to your signup page
     pub link_signup: String,
-    pub api: String,
+    /// Link to the API to contact
+    api: String,
 }
 
 impl Stych {
+    /// Creates typical new credential store
     pub fn new(
         project_id: impl Into<String>,
         secret: impl Into<String>,
@@ -25,6 +59,7 @@ impl Stych {
         )
     }
 
+    /// Creates credential store with url
     pub fn new_url(
         project_id: impl Into<String>,
         secret: impl Into<String>,
@@ -41,6 +76,7 @@ impl Stych {
         }
     }
 
+    /// Enacts the "login or create" flow
     pub async fn login_or_create(&self, email: impl Into<String>) -> Result<User> {
         #[derive(Serialize)]
         struct RequestJson<'a> {
@@ -71,7 +107,8 @@ impl Stych {
         Ok(resp.json().await?)
     }
 
-    pub async fn auth(&self, token: impl Into<String>) -> Result<()> {
+    /// Authorises a token, returning `Ok(())` if all is well
+    pub async fn auth(&self, token: impl Into<Token>) -> Result<()> {
         #[derive(Serialize)]
         struct RequestJson {
             token: String,
@@ -98,17 +135,28 @@ impl Stych {
     }
 }
 
+/// Representation of a user
 #[derive(Deserialize)]
 pub struct User {
+    /// The user's identifier
     pub id: String,
-    pub token: String, // TODO: check return of login_or_create
+    /// Current token created for the user
+    pub token: Token,
 }
 
+/// Type alias for tokens, with them really just being strings
+pub type Token = String;
+
+/// Crate-wide dissemination of results for ease of use
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// Errors which arise from the usage of this library
 pub enum Error {
+    /// Whilst requesting or decoding a request
     Request(reqwest::Error),
+    /// Couldn't login or create because of a bad response
     LoginOrCreate(StatusCode),
+    /// Couldn't authorise because of a bad response
     Auth(StatusCode),
 }
 
@@ -117,3 +165,5 @@ impl From<reqwest::Error> for Error {
         Self::Request(err)
     }
 }
+
+// TODO: fmt::Display
