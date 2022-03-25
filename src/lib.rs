@@ -29,6 +29,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 /// Credential storage and link management
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Stytch {
     /// Project identifier credential
     pub project_id: String,
@@ -136,7 +137,7 @@ impl Stytch {
 }
 
 /// Representation of a user
-#[derive(Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Deserialize)]
 pub struct User {
     /// The user's identifier
     pub id: String,
@@ -151,6 +152,7 @@ pub type Token = String;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// Errors which arise from the usage of this library
+#[derive(Debug)]
 pub enum Error {
     /// Whilst requesting or decoding a request
     Request(reqwest::Error),
