@@ -26,3 +26,7 @@ if authenticated {
     println!("Nope!");
 }
 ```
+
+## Why?
+
+I needed to use Stych as a requirement inside of an internal project, but there wheren't any Rust adapters available. Feel free contribute or message me to take over this project as it's in maintenance mode as it stands!
