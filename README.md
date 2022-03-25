@@ -1,14 +1,14 @@
-# Stych Rust
+# Stytch Rust
 
-Unofficial glue wrapper to use the basic email flow of Stych inside of Rust
+Unofficial glue wrapper to use the basic email flow of Stytch inside of Rust
 
 ## Usage
 
 ```rust
-use stych::Stych;
+use stytch::Stytch;
 
 // store credentials
-let stych = Stych::new(
+let stytch = Stytch::new(
     "project_id",
     "secret",
     "redirect_for_login",
@@ -16,10 +16,10 @@ let stych = Stych::new(
 );
 
 // create new user
-let user = stych.login_or_create("root@ogriffiths.com").await?;
+let user = stytch.login_or_create("root@ogriffiths.com").await?;
 
 // authenticate
-let authenticated = stych.auth(user.token).await?;
+let authenticated = stytch.auth(user.token).await?;
 if authenticated.is_ok() {
     println!("This user is good!");
 } else {
@@ -29,4 +29,4 @@ if authenticated.is_ok() {
 
 ## Why?
 
-I needed to use Stych as a requirement inside of an internal project, but there wheren't any Rust adapters available. Feel free contribute or message me to take over this project as it's in maintenance mode as it stands!
+I needed to use Stytch as a requirement inside of an internal project, but there wheren't any Rust adapters available. Feel free contribute or message me to take over this project as it's in maintenance mode as it stands!

@@ -1,12 +1,12 @@
-//! Unofficial glue wrapper to use the basic email flow of Stych inside of Rust
+//! Unofficial glue wrapper to use the basic email flow of Stytch inside of Rust
 //!
 //! # Usage
 //!
 //! ```no_run
-//! use stych::Stych;
+//! use stytch::Stytch;
 //!
 //! // Store credentials
-//! let stych = Stych::new(
+//! let stytch = Stytch::new(
 //!     "project_id",
 //!     "secret",
 //!     "redirect_for_login",
@@ -14,10 +14,10 @@
 //! );
 //!
 //! // Create new user
-//! let user = stych.login_or_create("root@ogriffiths.com").await?;
+//! let user = stytch.login_or_create("root@ogriffiths.com").await?;
 //!
 //! // Authenticate
-//! let authenticated = stych.auth(user.token).await?;
+//! let authenticated = stytch.auth(user.token).await?;
 //! if authenticated.is_ok() {
 //!     println!("This user is good!");
 //! } else {
@@ -29,7 +29,7 @@ use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
 /// Credential storage and link management
-pub struct Stych {
+pub struct Stytch {
     /// Project identifier credential
     pub project_id: String,
     /// Secret credential
@@ -42,7 +42,7 @@ pub struct Stych {
     api: String,
 }
 
-impl Stych {
+impl Stytch {
     /// Creates typical new credential store
     pub fn new(
         project_id: impl Into<String>,
