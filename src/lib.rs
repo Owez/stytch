@@ -2,7 +2,7 @@
 //!
 //! # Usage
 //!
-//! ```rust
+//! ```no_run
 //! use stych::Stych;
 //!
 //! // Store credentials
@@ -14,11 +14,11 @@
 //! );
 //!
 //! // Create new user
-//! let user = stych.login_or_create("root@ogriffiths.com").await.unwrap();
+//! let user = stych.login_or_create("root@ogriffiths.com").await?;
 //!
 //! // Authenticate
-//! let authenticated = stych.auth(user.token).await.is_ok();
-//! if authenticated {
+//! let authenticated = stych.auth(user.token).await?;
+//! if authenticated.is_ok() {
 //!     println!("This user is good!");
 //! } else {
 //!     println!("Nope!");
