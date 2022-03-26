@@ -29,4 +29,8 @@ if authenticated.is_ok() {
 
 ## Why?
 
-I needed to use Stytch as a requirement inside of an internal project, but there weren't any Rust adapters available. Feel free contribute or message me to take over this project as it's in maintenance mode as it stands!
+I needed to use Stytch as a requirement inside of an internal project, but there weren't any Rust adapters available. Feel free contribute or message me to take over this project as it's in maintenance mode as it stands; I'm up for hire!
+
+## Licensing
+
+This project is dual-licensed under both the [MIT](https://github.com/Owez/argi/blob/master/LICENSE-MIT) and [Apache](https://github.com/Owez/argi/blob/master/LICENSE-APACHE), so feel free to use either at your discretion.
