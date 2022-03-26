@@ -1,6 +1,6 @@
 [package]
-name = "stych"
-description = "Unofficial glue wrapper to use the basic email flow of Stych inside of Rust"
+name = "stytch"
+description = "Unofficial glue wrapper to use the basic email flow of Stytch inside of Rust"
 version = "0.1.0"
 edition = "2021"
 
