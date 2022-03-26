@@ -1,6 +1,6 @@
 # Stytch Rust
 
-Unofficial glue wrapper to use the basic email flow of Stytch inside of Rust
+Unofficial library to use the Stych email flow in Rust
 
 ## Usage
 

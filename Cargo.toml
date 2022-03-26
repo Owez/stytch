@@ -1,6 +1,6 @@
 [package]
 name = "stytch"
-description = "Unofficial glue wrapper to use the basic email flow of Stytch inside of Rust"
+description = "Unofficial library to use the Stych email flow in Rust"
 version = "0.1.0"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
