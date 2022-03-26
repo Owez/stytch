@@ -25,6 +25,8 @@
 //! }
 //! ```
 
+use core::fmt;
+
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
@@ -168,4 +170,16 @@ impl From<reqwest::Error> for Error {
     }
 }
 
-// TODO: fmt::Display
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Request(err) => write!(f, "Request error, {}", err),
+            // FIXME: better error
+            Self::LoginOrCreate(_) => {
+                write!(f, "Couldn't login or create because of a bad response")
+            }
+            // FIXME: better error
+            Self::Auth(_) => write!(f, "Couldn't authorise because of a bad response"),
+        }
+    }
+}
