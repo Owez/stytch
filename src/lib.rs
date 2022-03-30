@@ -121,40 +121,13 @@ impl Stytch {
             auth: UserAuth::Email { email },
         })
     }
-
-    /// Authorises a token, returning `Ok(())` if all is well
-    pub async fn auth(&self, token: impl Into<Token>) -> Result<()> {
-        #[derive(Serialize)]
-        struct RequestJson {
-            token: String,
-        }
-
-        let request_json = RequestJson {
-            token: token.into(),
-        };
-
-        let client = reqwest::Client::new();
-        let resp = client
-            .post(self.api.clone() + "/v1/magic_links/authenticate")
-            .basic_auth(&self.project_id, Some(&self.secret))
-            .json(&request_json)
-            .send()
-            .await?;
-
-        let status = resp.status();
-        if status != StatusCode::OK {
-            return Err(Error::Auth(status));
-        }
-
-        Ok(())
-    }
 }
 
 /// Representation of a user
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct User {
     /// The user's identifier
-    pub id: String,
+    pub id: UserId,
     /// Current token created for the user if known
     pub token: Option<Token>,
     /// Authentication details for user
@@ -167,7 +140,6 @@ pub enum UserAuth {
     Email { email: String },
     Phone { phone: String },
     Both { email: String, phone: String },
-    None,
 }
 
 impl UserAuth {
@@ -210,19 +182,50 @@ impl User {
             return Err(Error::Auth(status));
         }
 
-        #[derive(Deserialize)]
-        struct ResponseJson {
-            user_id: String,
-        }
-
-        let resp_json: ResponseJson = resp.json().await?;
-
+        let resp_json: ResponseUserId = resp.json().await?;
         Ok(Self {
             id: resp_json.user_id,
             token: None,
             auth,
         })
     }
+
+    /// Authorises a user via token, returning `Ok(())` if all is well
+    pub async fn auth(stytch: &Stytch, token: impl Into<Token>) -> Result<UserId> {
+        #[derive(Serialize)]
+        struct RequestJson {
+            token: String,
+        }
+
+        let request_json = RequestJson {
+            token: token.into(),
+        };
+
+        let client = reqwest::Client::new();
+        let resp = client
+            .post(stytch.api.clone() + "/v1/magic_links/authenticate")
+            .basic_auth(&stytch.project_id, Some(&stytch.secret))
+            .json(&request_json)
+            .send()
+            .await?;
+
+        let status = resp.status();
+        if status != StatusCode::OK {
+            return Err(Error::Auth(status));
+        }
+
+        let resp_json: ResponseUserId = resp.json().await?;
+        Ok(resp_json.user_id)
+    }
+}
+
+/// Type alias for user identifiers
+pub type UserId = String;
+
+/// Used to retreive a basic user id from a response
+#[derive(Deserialize)]
+struct ResponseUserId {
+    user_id: UserId,
 }
 
 /// Type alias for tokens, with them really just being strings
