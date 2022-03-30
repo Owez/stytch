@@ -88,8 +88,9 @@ impl Stytch {
             signup_magic_link_url: &'a str,
         }
 
+        let email = email.into();
         let request_json = RequestJson {
-            email: email.into(),
+            email: email.clone(),
             login_magic_link_url: &self.link_login,
             signup_magic_link_url: &self.link_signup,
         };
@@ -107,7 +108,18 @@ impl Stytch {
             return Err(Error::LoginOrCreate(status));
         }
 
-        Ok(resp.json().await?)
+        #[derive(Deserialize)]
+        struct ResponseJson {
+            user_id: String,
+        }
+
+        let resp_json: ResponseJson = resp.json().await?;
+
+        Ok(User {
+            id: resp_json.user_id,
+            token: None,
+            auth: UserAuth::Email { email },
+        })
     }
 
     /// Authorises a token, returning `Ok(())` if all is well
@@ -139,12 +151,78 @@ impl Stytch {
 }
 
 /// Representation of a user
-#[derive(Debug, PartialEq, Eq, Clone, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct User {
     /// The user's identifier
     pub id: String,
-    /// Current token created for the user
-    pub token: Token,
+    /// Current token created for the user if known
+    pub token: Option<Token>,
+    /// Authentication details for user
+    pub auth: UserAuth,
+}
+
+/// Authentication details for a user, defining what is allowed
+#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
+pub enum UserAuth {
+    Email { email: String },
+    Phone { phone: String },
+    Both { email: String, phone: String },
+    None,
+}
+
+impl UserAuth {
+    /// Creates new auth details for email-only
+    pub fn new_email(email: impl Into<String>) -> Self {
+        Self::Email {
+            email: email.into(),
+        }
+    }
+
+    /// Creates new auth details for phone-only
+    pub fn new_phone(phone: impl Into<String>) -> Self {
+        Self::Phone {
+            phone: phone.into(),
+        }
+    }
+
+    /// Creates new auth details for both kinds
+    pub fn new_both(email: impl Into<String>, phone: impl Into<String>) -> Self {
+        Self::Both {
+            email: email.into(),
+            phone: phone.into(),
+        }
+    }
+}
+
+impl User {
+    /// Creates a new user with provided details for further use
+    pub async fn create(stytch: &Stytch, auth: UserAuth) -> Result<Self> {
+        let client = reqwest::Client::new();
+        let resp = client
+            .post(stytch.api.clone() + "/users")
+            .basic_auth(&stytch.project_id, Some(&stytch.secret))
+            .json(&auth)
+            .send()
+            .await?;
+
+        let status = resp.status();
+        if status != StatusCode::OK {
+            return Err(Error::Auth(status));
+        }
+
+        #[derive(Deserialize)]
+        struct ResponseJson {
+            user_id: String,
+        }
+
+        let resp_json: ResponseJson = resp.json().await?;
+
+        Ok(Self {
+            id: resp_json.user_id,
+            token: None,
+            auth,
+        })
+    }
 }
 
 /// Type alias for tokens, with them really just being strings
