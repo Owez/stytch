@@ -26,6 +26,7 @@
 //! ```
 
 use core::fmt;
+use std::collections::HashMap;
 
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -58,7 +59,7 @@ impl Stytch {
             secret,
             link_login,
             link_signup,
-            String::from("https://api.stytch.com"),
+            String::from("https://api.stytch.com/v1"),
         )
     }
 
@@ -97,7 +98,7 @@ impl Stytch {
 
         let client = reqwest::Client::new();
         let resp = client
-            .post(self.api.clone() + "/v1/magic_links/email/login_or_create")
+            .post(self.api.clone() + "/magic_links/email/login_or_create")
             .basic_auth(&self.project_id, Some(&self.secret))
             .json(&request_json)
             .send()
@@ -118,7 +119,7 @@ impl Stytch {
         Ok(User {
             id: resp_json.user_id,
             token: None,
-            auth: UserAuth::Email { email },
+            auth: UserAuth::Email(email),
         })
     }
 }
@@ -135,34 +136,29 @@ pub struct User {
 }
 
 /// Authentication details for a user, defining what is allowed
-#[derive(Debug, PartialEq, Eq, Clone, Serialize)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum UserAuth {
-    Email { email: String },
-    Phone { phone: String },
+    Email(String),
+    Phone(String),
     Both { email: String, phone: String },
 }
 
 impl UserAuth {
-    /// Creates new auth details for email-only
-    pub fn new_email(email: impl Into<String>) -> Self {
-        Self::Email {
-            email: email.into(),
+    fn as_json(&self) -> HashMap<String, String> {
+        let mut out = HashMap::new();
+        match self {
+            Self::Email(email) => {
+                out.insert("email".to_string(), email.clone());
+            }
+            Self::Phone(phone) => {
+                out.insert("phone".to_string(), phone.clone());
+            }
+            Self::Both { email, phone } => {
+                out.insert("email".to_string(), email.clone());
+                out.insert("phone".to_string(), phone.clone());
+            }
         }
-    }
-
-    /// Creates new auth details for phone-only
-    pub fn new_phone(phone: impl Into<String>) -> Self {
-        Self::Phone {
-            phone: phone.into(),
-        }
-    }
-
-    /// Creates new auth details for both kinds
-    pub fn new_both(email: impl Into<String>, phone: impl Into<String>) -> Self {
-        Self::Both {
-            email: email.into(),
-            phone: phone.into(),
-        }
+        out
     }
 }
 
@@ -173,12 +169,14 @@ impl User {
         let resp = client
             .post(stytch.api.clone() + "/users")
             .basic_auth(&stytch.project_id, Some(&stytch.secret))
-            .json(&auth)
+            .json(&auth.as_json())
             .send()
             .await?;
 
         let status = resp.status();
-        if status != StatusCode::OK {
+        if status == StatusCode::BAD_REQUEST {
+            return Err(Error::DuplicateAuth);
+        } else if status != StatusCode::CREATED {
             return Err(Error::Auth(status));
         }
 
@@ -203,7 +201,7 @@ impl User {
 
         let client = reqwest::Client::new();
         let resp = client
-            .post(stytch.api.clone() + "/v1/magic_links/authenticate")
+            .post(stytch.api.clone() + "/magic_links/authenticate")
             .basic_auth(&stytch.project_id, Some(&stytch.secret))
             .json(&request_json)
             .send()
@@ -243,6 +241,8 @@ pub enum Error {
     LoginOrCreate(StatusCode),
     /// Couldn't authorise because of a bad response
     Auth(StatusCode),
+    /// Authroisation type (i.e. email/phone) already exists within Stytch's database
+    DuplicateAuth,
 }
 
 impl From<reqwest::Error> for Error {
@@ -263,6 +263,10 @@ impl fmt::Display for Error {
                 )
             }
             Self::Auth(err) => write!(f, "Couldn't authorise because of a bad response ({})", err),
+            Self::DuplicateAuth => write!(
+                f,
+                "Authroisation type (i.e. email/phone) already exists within Stytch's database"
+            ),
         }
     }
 }
