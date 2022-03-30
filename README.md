@@ -29,7 +29,7 @@ if authenticated.is_ok() {
 
 ## Project Status
 
-Feel free contribute or message me to take over this project as it's in maintenance mode as it stands; I'm up for hire!
+Feel free contribute or message me to take over this project as it's in maintenance mode as it stands; I'm for hire!
 
 ## Licensing
 

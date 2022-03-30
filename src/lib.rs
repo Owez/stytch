@@ -58,7 +58,7 @@ impl Stytch {
             secret,
             link_login,
             link_signup,
-            String::from("https://stytch.com"),
+            String::from("https://api.stytch.com"),
         )
     }
 
